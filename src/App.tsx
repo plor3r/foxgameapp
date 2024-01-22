@@ -33,7 +33,7 @@ export default function App() {
           children: [],
         },
         {
-          path: "game",
+          path: "/game",
           element: <Game />,
           children: [],
         },
