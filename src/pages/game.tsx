@@ -4,7 +4,6 @@ import {
   FoxGamePackageId,
   OriginFoxGamePackageId,
   FoxGameGlobal,
-  EggTreasuryCap,
 } from "../config";
 import { useState, useEffect } from "react";
 import {
@@ -18,12 +17,12 @@ import { TransactionBlock } from '@mysten/sui.js/transactions';
 
 export default function Game() {
   const account = useCurrentAccount();
-  const { currentWallet, isConnected } = useCurrentWallet();
+  const { isConnected } = useCurrentWallet();
   const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock();
 
   const [mintTx, setMintTx] = useState('');
-  const [stakeTx, setStakeTx] = useState('');
-  const [claimTx, setClaimTx] = useState('');
+  const [stakeTx] = useState('');
+  const [claimTx] = useState('');
 
   const [cost, setCost] = useState('');
 
@@ -37,20 +36,20 @@ export default function Game() {
   const [unstakedChicken, setUnstakedChicken] = useState<Array<{ objectId: string, index: number, url: string, is_chicken: boolean }>>([]);
   const [collectionSupply, setCollectionSupply] = useState(0);
   const [mintAmount, setMintAmount] = useState(1);
-  const [eggBalance, setEggBalance] = useState(0);
+  // const [eggBalance, setEggBalance] = useState(0);
   const [unstakedSelected, setUnstakedSelected] = useState<Array<string>>([])
 
-  const [barnStakedObject, setBarnStakedObject] = useState<string>('')
-  const [packStakedObject, setPackStakedObject] = useState<string>('')
+  const [barnStakedObject] = useState<string>('')
+  const [packStakedObject] = useState<string>('')
 
-  const [stakedChicken, setStakedChicken] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
-  const [stakedFox, setStakedFox] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
+  // const [stakedChicken, setStakedChicken] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
+  // const [stakedFox, setStakedFox] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
   const [stakedSelected, setStakedSelected] = useState<Array<string>>([]);
 
-  const [suiCost, setSuiCost] = useState<bigint>(BigInt(0));
-  const [eggCost, setEggCost] = useState<bigint>(BigInt(0));
+  const [_suiCost, setSuiCost] = useState<bigint>(BigInt(0));
+  const [_eggCost, setEggCost] = useState<bigint>(BigInt(0));
 
-  const [insufficientBalance, setInsufficientBalance] = useState(false);
+  // const [insufficientBalance, setInsufficientBalance] = useState(false);
 
   const client = useSuiClient();
 
@@ -58,10 +57,6 @@ export default function Game() {
     if (!isConnected) {
       alert("Please connect wallet first")
     }
-  }
-
-  function remove_leading_zero(address: string) {
-    return address.replace(/0x[0]+/, '0x')
   }
 
   async function mint_nft() {
@@ -132,36 +127,6 @@ export default function Game() {
     );
   }
 
-  async function mint_nft_stake() {
-    check_if_connected()
-    // let suiObjectIds = [] as Array<string>
-    // let eggObiectIds = [] as Array<string>
-    // if (collectionSupply < PAID_TOKENS) {
-    //   const suiObjects = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(account!.address, suiCost)
-    //   suiObjectIds = suiObjects.filter(item => item.status === "Exists").map((item: any) => item.details.data.fields.id.id)
-    // } else {
-    //   const eggObjects = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(account!.address, eggCost, `${FoxGamePackageId}::egg::EGG`)
-    //   eggObiectIds = eggObjects.filter(item => item.status === "Exists").map((item: any) => item.details.data.fields.id.id)
-    // }
-
-    // try {
-    //   const resData = await signAndExecuteTransaction(
-    //     {
-    //       transaction: {
-    //         kind: 'moveCall',
-    //         data: mint(true, suiObjectIds, eggObiectIds),
-    //       }
-    //     }
-    //   )
-    //   if (resData.effects.status.status !== "success") {
-    //     console.log('failed', resData);
-    //   }
-    //   setMintTx('https://explorer.sui.io/transaction/' + resData.certificate.transactionDigest)
-    // } catch (e) {
-    //   console.error('failed', e);
-    // }
-  }
-
   async function stake_nft() {
     check_if_connected()
     // try {
@@ -228,65 +193,6 @@ export default function Game() {
     const globalObject: any = await client.getObject({ id: FoxGameGlobal, options: { showContent: true } })
     const focRegistry = globalObject.data.content.fields.foc_registry
     setCollectionSupply(parseInt(focRegistry.fields.foc_born))
-  }
-
-  function mint(stake: boolean, sui_objects: Array<string>, egg_objects: Array<string>) {
-    return {
-      packageObjectId: FoxGamePackageId,
-      module: 'fox',
-      function: 'mint',
-      typeArguments: [],
-      arguments: [
-        FoxGameGlobal, EggTreasuryCap, mintAmount.toString(), stake, sui_objects, egg_objects
-      ],
-      gasBudget: 1000000,
-    };
-  }
-
-  function stake() {
-    return {
-      packageObjectId: FoxGamePackageId,
-      module: 'fox',
-      function: 'add_many_to_barn_and_pack',
-      typeArguments: [],
-      arguments: [
-        FoxGameGlobal,
-        unstakedSelected
-      ],
-      gasBudget: 30000,
-    };
-  }
-
-  function unstake() {
-    return {
-      packageObjectId: FoxGamePackageId,
-      module: 'fox',
-      function: 'claim_many_from_barn_and_pack',
-      typeArguments: [],
-      arguments: [
-        FoxGameGlobal,
-        EggTreasuryCap,
-        stakedSelected,
-        true
-      ],
-      gasBudget: 30000,
-    };
-  }
-
-  function claim() {
-    return {
-      packageObjectId: FoxGamePackageId,
-      module: 'fox',
-      function: 'claim_many_from_barn_and_pack',
-      typeArguments: [],
-      arguments: [
-        FoxGameGlobal,
-        EggTreasuryCap,
-        stakedSelected,
-        false
-      ],
-      gasBudget: 30000,
-    };
   }
 
   useEffect(() => {
@@ -452,15 +358,15 @@ export default function Game() {
     // }
   }, [isConnected, mintTx, claimTx])
 
-  function addStaked(item: string) {
-    setUnstakedSelected([])
-    setStakedSelected([...stakedSelected, item])
-  }
+  // function addStaked(item: string) {
+  //   setUnstakedSelected([])
+  //   setStakedSelected([...stakedSelected, item])
+  // }
 
-  function removeStaked(item: string) {
-    setUnstakedSelected([])
-    setStakedSelected(stakedSelected.filter(i => i !== item))
-  }
+  // function removeStaked(item: string) {
+  //   setUnstakedSelected([])
+  //   setStakedSelected(stakedSelected.filter(i => i !== item))
+  // }
 
   function addUnstaked(item: string) {
     setStakedSelected([])
@@ -472,7 +378,7 @@ export default function Game() {
     setUnstakedSelected(unstakedSelected.filter(i => i !== item))
   }
 
-  function renderUnstaked(item: any, type: string) {
+  function renderUnstaked(item: any, _type: string) {
     const itemIn = unstakedSelected.includes(item.objectId);
     return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
       <div className="flex flex-col items-center">
@@ -482,21 +388,21 @@ export default function Game() {
     </div>
   }
 
-  function renderStaked(item: any, type: string) {
-    const itemIn = stakedSelected.includes(item.objectId);
-    return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
-      <div className="flex flex-col items-center">
-        <div style={{ fontSize: "0.75rem", height: "1rem" }}>#{item.index}</div>
-        <img src={`${item.url}`} width={48} height={48} alt={`${item.objectId}`} onClick={() => itemIn ? removeStaked(item.objectId) : addStaked(item.objectId)} />
-      </div>
-    </div>
-  }
+  // function renderStaked(item: any, type: string) {
+  //   const itemIn = stakedSelected.includes(item.objectId);
+  //   return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
+  //     <div className="flex flex-col items-center">
+  //       <div style={{ fontSize: "0.75rem", height: "1rem" }}>#{item.index}</div>
+  //       <img src={`${item.url}`} width={48} height={48} alt={`${item.objectId}`} onClick={() => itemIn ? removeStaked(item.objectId) : addStaked(item.objectId)} />
+  //     </div>
+  //   </div>
+  // }
 
   return (
     <div style={{ paddingTop: '1px' }}>
       <div className="text-center"><span className="mb-5 text-center title">Fox Game</span>
-        {NETWORK === "mainnet" ? <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui</span>
-          : <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui {NETWORK}</span>}
+        {/* {NETWORK === "mainnet" ? <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui</span> */}
+          <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui {NETWORK}</span>
       </div>
       <div className="flex flex-row items-center space-x-2 justify-center">
         <div className="mb-5 text-sm font-console basis-2/5 " style={{ maxWidth: "100%" }}>
@@ -559,8 +465,8 @@ export default function Game() {
                   {unstakedFox.length == 0 && unstakedChicken.length == 0 ? <>
                     <div className="text-red font-console text-xs">NO TOKENS</div>
                   </> : <div className="overflow-x-scroll">
-                    {unstakedFox.map((item, i) => renderUnstaked(item, "fox"))}
-                    {unstakedChicken.map((item, i) => renderUnstaked(item, "chicken"))}
+                    {unstakedFox.map((item) => renderUnstaked(item, "fox"))}
+                    {unstakedChicken.map((item) => renderUnstaked(item, "chicken"))}
                   </div>
                   }
                 </div>

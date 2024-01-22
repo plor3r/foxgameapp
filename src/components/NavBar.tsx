@@ -9,9 +9,7 @@ export function NavBar() {
         <Link href="/">
           <div className="title cursor-pointer" style={{ fontSize: "24px" }}>Fox Game</div>
         </Link>
-        {NETWORK == "mainnet" ?
-          <div className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "14px" }}>Sui</div>
-          : <div className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "14px" }}>Sui {NETWORK}</div>}
+          <div className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "14px" }}>Sui {NETWORK}</div>
         <ul className="menu menu-horizontal p-0 ml-5">
           <li className="font-sans text-lg">
             <Link href='/game'>Play</Link>
