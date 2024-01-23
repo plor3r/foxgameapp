@@ -22,9 +22,15 @@ export default function Game() {
   const { mutate: signAndExecuteTransactionBlock } = useSignAndExecuteTransactionBlock();
 
   const [mintTx, setMintTx] = useState('');
+  const [isMinting, setIsMinting] = useState(false);
+
   const [stakeTx] = useState('');
   const [claimTx] = useState('');
+
   const [moveTx, setMoveTx] = useState('');
+  const [isMintingMove, setIsMintingMove] = useState(false);
+  const [isBurning, setIsBurning] = useState(false);
+
   const [moveAmount, setMoveAmount] = useState(0);
 
   const [cost, setCost] = useState(0);
@@ -125,6 +131,7 @@ export default function Game() {
   }
 
   async function mint_movescription() {
+    setIsMintingMove(true)
     const txb = new TransactionBlock();
     // == deposit
     const mint_fee = 0.1 * 1_000_000_000;
@@ -142,18 +149,22 @@ export default function Game() {
           console.log('executed transaction block', result);
           setMoveTx(`https://suiexplorer.com/txblock/${result.digest}`);
           setUnstakedSelected([])
+          setIsMintingMove(false)
         },
         onError: (error) => {
           console.log(error);
+          setIsMintingMove(false)
         },
         onSettled: (data) => {
           console.log(data);
+          setIsMintingMove(false)
         }
       },
     );
   }
 
   async function mint_nft() {
+    setIsMinting(true)
     const [objects, totalAmount] = await fetch_movescription_greater_than(mintAmount * 10000);
     const txb = new TransactionBlock();
 
@@ -196,18 +207,22 @@ export default function Game() {
         onSuccess: (result) => {
           console.log('executed transaction block', result);
           setMintTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setIsMinting(false);
         },
         onError: (error) => {
           console.log(error);
+          setIsMinting(false);
         },
         onSettled: (data) => {
-          console.log(data)
+          console.log(data);
+          setIsMinting(false);
         }
       },
     );
   }
 
   async function burn_nft(foc: any) {
+    setIsBurning(true)
     const txb = new TransactionBlock();
     // == deposit
     txb.moveCall({
@@ -226,14 +241,17 @@ export default function Game() {
           console.log('executed transaction block', result);
           setMintTx(`https://suiexplorer.com/txblock/${result.digest}`);
           setUnstakedSelected([])
+          setIsBurning(false)
         },
         onError: (error) => {
           console.log(error);
           setUnstakedSelected([])
+          setIsBurning(false)
         },
         onSettled: (data) => {
           console.log(data);
           setUnstakedSelected([])
+          setIsBurning(false)
         }
       },
     );
@@ -559,9 +577,9 @@ export default function Game() {
                     onClick={mint_nft}
                   >
                     <div className="text-center font-console pt-1" >
-                      <div className="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading">
-                      </div>
-                      Mint
+                      {isMinting ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Mint</span>}
                     </div>
                   </div>
                   {/* <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
@@ -574,7 +592,11 @@ export default function Game() {
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={mint_movescription}
                   >
-                    <div className="text-center font-console pt-1" >Mint MOVE</div>
+                    <div className="text-center font-console pt-1" >
+                      {isMintingMove ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Mint MOVE</span>}
+                    </div>
                   </div>
                 </div>
                 <div className="h-4"></div>
@@ -637,7 +659,11 @@ export default function Game() {
                   {unstakedSelected.length == 1 && <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={() => burn_nft(unstakedSelected[0])}>
-                    <div className="text-center font-console pt-1">Burn</div>
+                    <div className="text-center font-console pt-1">
+                      {isBurning ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Burn</span>}
+                    </div>
                   </div>}
                 </div>}
                 {stakedSelected.length > 0 && <div className="flex flex-row space-x-4">
