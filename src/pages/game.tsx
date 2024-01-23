@@ -24,8 +24,10 @@ export default function Game() {
   const [mintTx, setMintTx] = useState('');
   const [stakeTx] = useState('');
   const [claimTx] = useState('');
+  const [moveTx, setMoveTx] = useState('');
+  const [moveAmount, setMoveAmount] = useState(0);
 
-  const [cost, setCost] = useState('');
+  const [cost, setCost] = useState(0);
 
   const MAX_TOKEN = 2000;
   const PAID_TOKENS = 20000;
@@ -56,6 +58,38 @@ export default function Game() {
     if (!isConnected) {
       alert("Please connect wallet first")
     }
+  }
+
+  function numberWithCommas(x: number) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  async function fetch_movescription_amount() {
+    let hasNextPage = true;
+    let allObjects: any[] = []
+    while (hasNextPage) {
+      const objects = await client.getOwnedObjects({
+        owner: account!.address,
+        filter: {
+          MatchAll: [
+            {
+              StructType: `${MovescriptionPackageId}::movescription::Movescription`,
+            },
+            {
+              AddressOwner: account!.address,
+            }
+          ]
+        },
+        options: {
+          showContent: true
+        }
+      })
+      allObjects = allObjects.concat(objects.data)
+      hasNextPage = objects.hasNextPage
+    }
+    let totalAmount = allObjects.map((c: any) => parseInt(c.data.content.fields.amount))
+      .reduce((sum, current) => sum + current);
+    setMoveAmount(totalAmount)
   }
 
   async function fetch_movescription_greater_than(amount: any): Promise<[any, number]> {
@@ -106,7 +140,7 @@ export default function Game() {
       {
         onSuccess: (result) => {
           console.log('executed transaction block', result);
-          setMintTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setMoveTx(`https://suiexplorer.com/txblock/${result.digest}`);
           setUnstakedSelected([])
         },
         onError: (error) => {
@@ -277,19 +311,19 @@ export default function Game() {
     if (collectionSupply < PAID_TOKENS) {
       setSuiCost(BigInt(SingleMintPrice * mintAmount))
       setEggCost(BigInt(0))
-      setCost(`${(SingleMintPrice * mintAmount)} MOVE`)
+      setCost(SingleMintPrice * mintAmount)
     } else if (collectionSupply <= MAX_TOKEN * 2 / 5) {
       setSuiCost(BigInt(0))
       setEggCost(BigInt(1.1 * SingleMintPrice * mintAmount))
-      setCost(`${1.1 * SingleMintPrice * mintAmount} MOVE`)
+      setCost(1.1 * SingleMintPrice * mintAmount)
     } else if (collectionSupply <= MAX_TOKEN * 4 / 5) {
       setSuiCost(BigInt(0))
       setEggCost(BigInt(1.2 * SingleMintPrice * mintAmount))
-      setCost(`${1.2 * SingleMintPrice * mintAmount} MOVE`)
+      setCost(1.2 * SingleMintPrice * mintAmount)
     } else {
       setSuiCost(BigInt(0))
       setEggCost(BigInt(1.4 * SingleMintPrice * mintAmount))
-      setCost(`${1.4 * SingleMintPrice * mintAmount} MOVE`)
+      setCost(1.4 * SingleMintPrice * mintAmount)
     }
   }, [collectionSupply, mintAmount]);
 
@@ -298,6 +332,10 @@ export default function Game() {
       await getCollectionSupply();
     }
     fetchData()
+    const fetchMovescription = async () => {
+      await fetch_movescription_amount()
+    }
+    fetchMovescription()
     const interval = setInterval(() => {
       fetchData()
     }, 10000)
@@ -309,7 +347,11 @@ export default function Game() {
       await getCollectionSupply();
     }
     fetchData()
-  }, [mintTx]);
+    const fetchMovescription = async () => {
+      await fetch_movescription_amount()
+    }
+    fetchMovescription()
+  }, [mintTx, moveTx]);
 
   // get unstaked fox or chicken
   useEffect(() => {
@@ -500,23 +542,27 @@ export default function Game() {
                   <div className="progress-bar" style={{ width: `${collectionSupply / MAX_TOKEN * 100}%` }}></div>
                 </div>
                 <div className="h-2"></div>
-                <div><span className="text-red text-xl">{collectionSupply} / {MAX_TOKEN} MINTED</span></div>
+                <div><span className="text-xl"><span className="text-red">{numberWithCommas(collectionSupply)}</span> / {numberWithCommas(MAX_TOKEN)} MINTED</span></div>
                 <div className="h-4"></div>
                 <div>
-                  <span className="text-black text-xl">AMOUNT </span>
+                  <span className="text-black text-xl">AMOUNT</span>
                   <i className="text-red arrow down cursor-pointer ml-2 mr-2" onClick={() => setMintAmount(Math.max(1, mintAmount - 1))}></i>
                   <span className="text-red text-2xl">{mintAmount}</span>
                   <i className="text-red arrow up cursor-pointer ml-2" onClick={() => setMintAmount(Math.min(10, mintAmount + 1))}></i>
                 </div>
                 <div className="h-2"></div>
-                <div><span className="text-black text-xl">COST: </span><span className="text-red text-xl">{cost}</span></div>
+                <div><span className="text-black text-xl">COST: </span><span className="text-red text-xl">{numberWithCommas(cost)} MOVE</span></div>
                 <div className="h-4"></div>
                 <div className="flex flex-row space-x-4">
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={mint_nft}
                   >
-                    <div className="text-center font-console pt-1" >Mint</div>
+                    <div className="text-center font-console pt-1" >
+                      <div className="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading">
+                      </div>
+                      Mint
+                    </div>
                   </div>
                   {/* <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
@@ -530,6 +576,10 @@ export default function Game() {
                   >
                     <div className="text-center font-console pt-1" >Mint MOVE</div>
                   </div>
+                </div>
+                <div className="h-4"></div>
+                <div className="flex flex-row space-x-4">
+                  <div className="text-black text-lg">Your $MOVE amount: <span className="text-red">{numberWithCommas(moveAmount)}</span> MOVE</div>
                 </div>
               </div>
             </div>
