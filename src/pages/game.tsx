@@ -652,7 +652,7 @@ export default function Game() {
                 </div> */}
                 <div className="h-4"></div>
                 <div className="h-4"></div>
-                {unstakedSelected.length == 0 && stakedSelected.length == 0 && <div className="text-center font-console pt-2 pb-2 text-red text-xl">Select tokens to stake, shear or unstake</div>}
+                {unstakedSelected.length == 0 && stakedSelected.length == 0 && <div className="text-center font-console pt-2 pb-2 text-red text-xl">Select tokens to burn (will charge 5% MOVE)</div>}
                 {unstakedSelected.length > 0 && <div className="flex flex-row space-x-4">
                   {/* <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled>
