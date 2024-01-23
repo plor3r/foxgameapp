@@ -224,14 +224,16 @@ export default function Game() {
   async function burn_nft(foc: any) {
     setIsBurning(true)
     const txb = new TransactionBlock();
-    // == deposit
-    txb.moveCall({
-      target: `${FoxGamePackageId}::fox::burn`,
-      arguments: [
-        txb.object(FoxGameGlobal),
-        txb.object(foc)
-      ],
-    });
+    for (let index = 0; index < foc.length; index++) {
+      const element = foc[index];
+      txb.moveCall({
+        target: `${FoxGamePackageId}::fox::burn`,
+        arguments: [
+          txb.object(FoxGameGlobal),
+          txb.object(element)
+        ],
+      });
+    }
     signAndExecuteTransactionBlock(
       {
         transactionBlock: txb,
@@ -656,15 +658,15 @@ export default function Game() {
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled>
                     <div className="text-center font-console pt-1" onClick={stake_nft}>Stake</div>
                   </div> */}
-                  {unstakedSelected.length == 1 && <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
+                  <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
-                    onClick={() => burn_nft(unstakedSelected[0])}>
+                    onClick={() => burn_nft(unstakedSelected)}>
                     <div className="text-center font-console pt-1">
                       {isBurning ?
                         <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
                         : <span>Burn</span>}
                     </div>
-                  </div>}
+                  </div>
                 </div>}
                 {stakedSelected.length > 0 && <div className="flex flex-row space-x-4">
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
