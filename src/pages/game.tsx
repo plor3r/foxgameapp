@@ -4,6 +4,7 @@ import {
   FoxGamePackageId,
   OriginFoxGamePackageId,
   FoxGameGlobal,
+  MovescriptionTicketRecordId,
 } from "../config";
 import { useState, useEffect } from "react";
 import {
@@ -29,8 +30,6 @@ export default function Game() {
   const MAX_TOKEN = 2000;
   const PAID_TOKENS = 20000;
   const SingleMintPrice = 10000;
-
-  const inscription_id = '0x0d8fd7b5903736ac7b564ec90d31efa4359452370f38f18f41ba27147847abce';
 
   const [unstakedFox, setUnstakedFox] = useState<Array<{ objectId: string, index: number, url: string, is_chicken: boolean }>>([]);
   const [unstakedChicken, setUnstakedChicken] = useState<Array<{ objectId: string, index: number, url: string, is_chicken: boolean }>>([]);
@@ -59,13 +58,91 @@ export default function Game() {
     }
   }
 
-  async function mint_nft() {
+  async function fetch_movescription_greater_than(amount: any): Promise<[any, number]> {
+    const objects = await client.getOwnedObjects({
+      owner: account!.address,
+      filter: {
+        MatchAll: [
+          {
+            StructType: `${MovescriptionPackageId}::movescription::Movescription`,
+          },
+          {
+            AddressOwner: account!.address,
+          }
+        ]
+      },
+      options: {
+        showContent: true
+      }
+    })
+    let totalAmount = 0;
+    let objectIds = []
+    for (let index = 0; index < objects.data.length; index++) {
+      const element: any = objects.data[index];
+      objectIds.push(element.data.objectId)
+      totalAmount += parseInt(element.data.content.fields.amount)
+      console.log(totalAmount)
+      if (totalAmount >= amount) break
+    }
+    if (totalAmount < amount) {
+      return [[], 0]
+    }
+    return [objectIds, totalAmount]
+  }
+
+  async function mint_movescription() {
     const txb = new TransactionBlock();
     // == deposit
-    const [move] = txb.moveCall({
-      target: `${MovescriptionPackageId}::movescription::do_split`,
-      arguments: [txb.object(inscription_id), txb.pure(mintAmount * 10000)],
+    const mint_fee = 0.1 * 1_000_000_000;
+    const [coin] = txb.splitCoins(txb.gas, [mint_fee]);
+    txb.moveCall({
+      target: `${MovescriptionPackageId}::movescription::mint`,
+      arguments: [txb.object(MovescriptionTicketRecordId), txb.pure("MOVE"), coin, txb.object('0x6')],
     });
+    signAndExecuteTransactionBlock(
+      {
+        transactionBlock: txb,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction block', result);
+          setMintTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setUnstakedSelected([])
+        },
+        onError: (error) => {
+          console.log(error);
+        },
+        onSettled: (data) => {
+          console.log(data);
+        }
+      },
+    );
+  }
+
+  async function mint_nft() {
+    const [objects, totalAmount] = await fetch_movescription_greater_than(mintAmount * 10000);
+    const txb = new TransactionBlock();
+
+    const inscription_id = objects[0]
+    if (objects.length > 1) {
+      for (let index = 1; index < objects.length; index++) {
+        const ins_id = objects[index];
+        txb.moveCall({
+          target: `${MovescriptionPackageId}::movescription::merge`,
+          arguments: [txb.object(inscription_id), txb.object(ins_id)],
+        });
+      }
+    }
+    // == deposit
+    let move;
+    if (totalAmount > mintAmount * 10000) {
+      [move] = txb.moveCall({
+        target: `${MovescriptionPackageId}::movescription::do_split`,
+        arguments: [txb.object(inscription_id), txb.pure(mintAmount * 10000)],
+      });
+    } else {
+      move = inscription_id
+    }
     txb.moveCall({
       target: `${FoxGamePackageId}::fox::mint`,
       arguments: [
@@ -76,6 +153,7 @@ export default function Game() {
         txb.object('0x6')
       ],
     });
+    txb.setGasBudget(300_000_000 * mintAmount)
     signAndExecuteTransactionBlock(
       {
         transactionBlock: txb,
@@ -127,26 +205,26 @@ export default function Game() {
     );
   }
 
-  async function stake_nft() {
-    check_if_connected()
-    // try {
-    //   const resData = await signAndExecuteTransaction(
-    //     {
-    //       transaction: {
-    //         kind: 'moveCall',
-    //         data: stake(),
-    //       }
-    //     }
-    //   )
-    //   if (resData.effects.status.status !== "success") {
-    //     console.log('failed', resData);
-    //   }
-    //   setStakeTx('https://explorer.sui.io/transaction/' + resData.certificate.transactionDigest)
-    //   setUnstakedSelected([])
-    // } catch (e) {
-    //   console.error('failed', e);
-    // }
-  }
+  // async function stake_nft() {
+  //   check_if_connected()
+  //   try {
+  //     const resData = await signAndExecuteTransaction(
+  //       {
+  //         transaction: {
+  //           kind: 'moveCall',
+  //           data: stake(),
+  //         }
+  //       }
+  //     )
+  //     if (resData.effects.status.status !== "success") {
+  //       console.log('failed', resData);
+  //     }
+  //     setStakeTx('https://explorer.sui.io/transaction/' + resData.certificate.transactionDigest)
+  //     setUnstakedSelected([])
+  //   } catch (e) {
+  //     console.error('failed', e);
+  //   }
+  // }
 
   async function unstake_nft() {
     check_if_connected()
@@ -402,10 +480,10 @@ export default function Game() {
     <div style={{ paddingTop: '1px' }}>
       <div className="text-center"><span className="mb-5 text-center title">Fox Game</span>
         {/* {NETWORK === "mainnet" ? <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui</span> */}
-          <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui {NETWORK}</span>
+        <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>{NETWORK}</span>
       </div>
-      <div className="flex flex-row items-center space-x-2 justify-center">
-        <div className="mb-5 text-sm font-console basis-2/5 " style={{ maxWidth: "100%" }}>
+      <div className="flex flex-wrap items-center space-x-2 justify-center">
+        <div className="mb-5 text-sm font-console basis-2/5" style={{ minWidth: '480px' }}>
           <div className="relative flex justify-center w-full h-full p-1 overflow-hidden md:p-5" style={{ borderImage: "url('/wood-frame.svg') 30 / 1 / 0 stretch", borderWidth: "30px", background: "rgb(237, 227, 209)" }}>
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
@@ -446,12 +524,18 @@ export default function Game() {
                   >
                     <div className="text-center font-console pt-1" >Mint & Stake</div>
                   </div> */}
+                  <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
+                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
+                    onClick={mint_movescription}
+                  >
+                    <div className="text-center font-console pt-1" >Mint MOVE</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="mb-5 text-sm font-console basis-2/5" style={{ maxWidth: "50%" }}>
+        <div className="mb-5 text-sm font-console basis-2/5" style={{ minWidth: '480px' }}>
           <div className="relative flex justify-center w-full h-full p-1 overflow-hidden md:p-5" style={{ borderImage: "url('./wood-frame.svg') 30 / 1 / 0 stretch", borderWidth: "30px", background: "rgb(237, 227, 209)" }}>
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
@@ -496,11 +580,11 @@ export default function Game() {
                 <div className="h-4"></div>
                 {unstakedSelected.length == 0 && stakedSelected.length == 0 && <div className="text-center font-console pt-2 pb-2 text-red text-xl">Select tokens to stake, shear or unstake</div>}
                 {unstakedSelected.length > 0 && <div className="flex flex-row space-x-4">
-                  <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400" 
-                  style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled>
+                  {/* <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
+                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled>
                     <div className="text-center font-console pt-1" onClick={stake_nft}>Stake</div>
-                  </div>
-                  { unstakedSelected.length == 1 &&<div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
+                  </div> */}
+                  {unstakedSelected.length == 1 && <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={() => burn_nft(unstakedSelected[0])}>
                     <div className="text-center font-console pt-1">Burn</div>

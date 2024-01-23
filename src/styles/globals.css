@@ -16,7 +16,7 @@
     color: transparent;
     background: linear-gradient(180deg, #b11d18 65%, #862227 65% 100%);
     background-clip: text;
-    filter: drop-shadow(3px 3px 0 #000000);
+    filter: drop-shadow(1px 1px 0 #000000);
     font-size: 60px;
 }
 

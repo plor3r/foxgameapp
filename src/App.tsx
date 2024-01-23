@@ -14,7 +14,7 @@ import { NavBar } from "./components/NavBar";
 
 function MainLayout() {
   return (
-    <div className="px-8 rootimage min-h-screen">
+    <div className="rootimage min-h-screen">
       <NavBar />
       <Outlet />
     </div>

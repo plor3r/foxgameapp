@@ -1,28 +1,32 @@
-import {Link} from '@mui/material';
 import { SuiConnect } from "./SuiConnect";
-import { NETWORK } from "../config";
+import { Link } from "react-router-dom";
 
 export function NavBar() {
   return (
-    <nav className="navbar py-4 px-4">
-      <div className="flex-1 text-lg font-semibold">
-        <Link href="/">
-          <div className="title cursor-pointer" style={{ fontSize: "24px" }}>Fox Game</div>
+    <nav className="flex items-center justify-between flex-wrap p-3">
+      <div className="flex items-center flex-shrink-0 text-white mr-6">
+        <Link to="/" className="title cursor-pointer" style={{ fontSize: "24px" }}>
+          Fox Game
         </Link>
-          <div className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "14px" }}>Sui {NETWORK}</div>
-        <ul className="menu menu-horizontal p-0 ml-5">
-          <li className="font-sans text-lg">
-            <Link href='/game'>Play</Link>
-          </li>
-          <li className="font-sans text-lg">
-            <Link href="/whitepapers" target="_blank">Whitepapers</Link>
-          </li>
-          <li className="font-sans text-lg">
-            <Link href="https://github.com/plor3r" target="_blank">Source Code</Link>
-          </li>
-        </ul>
       </div>
-      <SuiConnect />
+      <div className="block lg:hidden">
+        <button className="flex items-center px-3 py-2 border rounded text-teal-200 border-teal-400 hover:text-white hover:border-white">
+          <svg className="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" /></svg>
+        </button>
+      </div>
+      <div className="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
+        <div className="text-sm lg:flex-grow">
+          <Link to="/game" className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4 text-red font-sans text-lg">
+            Play
+          </Link>
+          <Link to="https://github.com/plor3r" target="_blank" className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4 text-red font-sans text-lg">
+            Source Code
+          </Link>
+        </div>
+        <div>
+          <SuiConnect></SuiConnect>
+        </div>
+      </div>
     </nav>
   );
 }
