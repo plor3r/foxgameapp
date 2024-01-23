@@ -14,7 +14,7 @@ export default function Home() {
                   <span className="text-2xl">- The Shepherd</span></div>
                 <div className="w-48 h-10 pt-1.5 flex justify-center align-center px-2 cursor-pointer" style={{ borderStyle: "outset", borderColor: "rgb(134, 34, 39)", borderWidth: "4px", backgroundColor: "rgb(177, 29, 24)" }}>
                   <div className="flex flex-row w-full">
-                    <a href="/game" className="text-center text-white w-full text-center">play</a>
+                    <a href={`/game`}className="text-center text-white w-full text-center">play</a>
                   </div>
                 </div>
                 <div className="relative flex items-center justify-center cursor-pointer false mt-4" style={{ userSelect: "none", width: "200px", height: "40px", backgroundColor: "rgb(131, 75, 27)", color: "white", borderWidth: "4px", borderColor: "rgb(99, 54, 33)" }}>

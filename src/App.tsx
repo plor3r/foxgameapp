@@ -2,6 +2,7 @@ import {
   Outlet,
   RouterProvider,
   createBrowserRouter,
+  redirect,
 } from "react-router-dom";
 // import { ConnectButton } from "@mysten/dapp-kit";
 // import { WalletStatus } from "./WalletStatus";
@@ -29,11 +30,16 @@ export default function App() {
       children: [
         {
           path: "/",
+          loader: () => redirect("/home"),
+        },
+        {
+          path: "home",
           element: <Home />,
           children: [],
         },
+
         {
-          path: "/game",
+          path: "game",
           element: <Game />,
           children: [],
         },
