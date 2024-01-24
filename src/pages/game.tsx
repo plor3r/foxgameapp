@@ -24,7 +24,8 @@ export default function Game() {
   const [mintTx, setMintTx] = useState('');
   const [isMinting, setIsMinting] = useState(false);
 
-  const [stakeTx] = useState('');
+  const [stakeTx, setStakeTx] = useState('');
+  const [isStaking, setIsStaking] = useState(false);
   const [claimTx] = useState('');
 
   const [moveTx, setMoveTx] = useState('');
@@ -46,11 +47,11 @@ export default function Game() {
   // const [eggBalance, setEggBalance] = useState(0);
   const [unstakedSelected, setUnstakedSelected] = useState<Array<string>>([])
 
-  const [barnStakedObject] = useState<string>('')
-  const [packStakedObject] = useState<string>('')
+  const [barnStakedObject, setBarnStakedObject] = useState<string>('')
+  const [packStakedObject, setPackStakedObject] = useState<string>('')
 
-  // const [stakedChicken, setStakedChicken] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
-  // const [stakedFox, setStakedFox] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
+  const [stakedChicken, _setStakedChicken] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
+  const [stakedFox, _setStakedFox] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
   const [stakedSelected, setStakedSelected] = useState<Array<string>>([]);
 
   const [_suiCost, setSuiCost] = useState<bigint>(BigInt(0));
@@ -259,26 +260,42 @@ export default function Game() {
     );
   }
 
-  // async function stake_nft() {
-  //   check_if_connected()
-  //   try {
-  //     const resData = await signAndExecuteTransaction(
-  //       {
-  //         transaction: {
-  //           kind: 'moveCall',
-  //           data: stake(),
-  //         }
-  //       }
-  //     )
-  //     if (resData.effects.status.status !== "success") {
-  //       console.log('failed', resData);
-  //     }
-  //     setStakeTx('https://explorer.sui.io/transaction/' + resData.certificate.transactionDigest)
-  //     setUnstakedSelected([])
-  //   } catch (e) {
-  //     console.error('failed', e);
-  //   }
-  // }
+  async function stake_nft() {
+    setIsStaking(true)
+    console.log(unstakedSelected)
+    const txb = new TransactionBlock();
+    txb.moveCall({
+      target: `${FoxGamePackageId}::fox::add_many_to_barn_and_pack`,
+      arguments: [
+        txb.object(FoxGameGlobal),
+        unstakedSelected.map(item => txb.object(item)) as any,
+        txb.object('0x6'),
+      ],
+    });
+    signAndExecuteTransactionBlock(
+      {
+        transactionBlock: txb,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction block', result);
+          setStakeTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setUnstakedSelected([])
+          setIsStaking(false)
+        },
+        onError: (error) => {
+          console.log(error);
+          setUnstakedSelected([])
+          setIsStaking(false)
+        },
+        onSettled: (data) => {
+          console.log(data);
+          setUnstakedSelected([])
+          setIsStaking(false)
+        }
+      },
+    );
+  }
 
   async function unstake_nft() {
     check_if_connected()
@@ -413,15 +430,14 @@ export default function Game() {
 
   // get globla object
   useEffect(() => {
-    // (async () => {
-    //   const globalObject: any = await client.getObject({ id: FoxGameGlobal, options: {showContent: true} })
-    //   console.log(globalObject)
-    //   const barn_staked = globalObject.data.content.fields.barn.fields.id.id
-    //   setBarnStakedObject(barn_staked)
+    (async () => {
+      const globalObject: any = await client.getObject({ id: FoxGameGlobal, options: {showContent: true} })
+      const barn_staked = globalObject.data.content.fields.barn.fields.id.id
+      setBarnStakedObject(barn_staked)
 
-    //   const pack_staked = globalObject.data.content.fields.pack.fields.id.id
-    //   setPackStakedObject(pack_staked)
-    // })()
+      const pack_staked = globalObject.data.content.fields.pack.fields.id.id
+      setPackStakedObject(pack_staked)
+    })()
   })
 
   // get bark.staked object
@@ -498,15 +514,15 @@ export default function Game() {
     // }
   }, [isConnected, mintTx, claimTx])
 
-  // function addStaked(item: string) {
-  //   setUnstakedSelected([])
-  //   setStakedSelected([...stakedSelected, item])
-  // }
+  function addStaked(item: string) {
+    setUnstakedSelected([])
+    setStakedSelected([...stakedSelected, item])
+  }
 
-  // function removeStaked(item: string) {
-  //   setUnstakedSelected([])
-  //   setStakedSelected(stakedSelected.filter(i => i !== item))
-  // }
+  function removeStaked(item: string) {
+    setUnstakedSelected([])
+    setStakedSelected(stakedSelected.filter(i => i !== item))
+  }
 
   function addUnstaked(item: string) {
     setStakedSelected([])
@@ -528,15 +544,15 @@ export default function Game() {
     </div>
   }
 
-  // function renderStaked(item: any, type: string) {
-  //   const itemIn = stakedSelected.includes(item.objectId);
-  //   return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
-  //     <div className="flex flex-col items-center">
-  //       <div style={{ fontSize: "0.75rem", height: "1rem" }}>#{item.index}</div>
-  //       <img src={`${item.url}`} width={48} height={48} alt={`${item.objectId}`} onClick={() => itemIn ? removeStaked(item.objectId) : addStaked(item.objectId)} />
-  //     </div>
-  //   </div>
-  // }
+  function renderStaked(item: any, type: string) {
+    const itemIn = stakedSelected.includes(item.objectId);
+    return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
+      <div className="flex flex-col items-center">
+        <div style={{ fontSize: "0.75rem", height: "1rem" }}>#{item.index}</div>
+        <img src={`${item.url}`} width={48} height={48} alt={`${item.objectId}`} onClick={() => itemIn ? removeStaked(item.objectId) : addStaked(item.objectId)} />
+      </div>
+    </div>
+  }
 
   return (
     <div style={{ paddingTop: '1px' }}>
@@ -629,7 +645,7 @@ export default function Game() {
                   }
                 </div>
                 <div className="h-4"></div>
-                {/* <div className="text-center font-console pt-1 text-red text-2xl">STAKED</div>
+                <div className="text-center font-console pt-1 text-red text-2xl">STAKED</div>
                 <div className="h-4"></div>
                 <div className="w-full" style={{ borderWidth: "0px 0px 4px 4px", borderTopStyle: "initial", borderRightStyle: "initial", borderBottomStyle: "solid", borderLeftStyle: "solid", borderTopColor: "initial", borderRightColor: "initial", borderBottomColor: "rgb(42, 35, 30)", borderLeftColor: "rgb(42, 35, 30)", borderImage: "initial", padding: "2px", opacity: "1" }}>
                   <div className="text-red font-console">BARN</div>
@@ -649,15 +665,20 @@ export default function Game() {
                     {stakedFox.map((item, i) => renderStaked(item, "fox"))}
                   </div>
                   }
-                </div> */}
+                </div>
                 <div className="h-4"></div>
                 <div className="h-4"></div>
-                {unstakedSelected.length == 0 && stakedSelected.length == 0 && <div className="text-center font-console pt-2 pb-2 text-red text-xl">Select tokens to burn (will charge 5% MOVE)</div>}
+                {unstakedSelected.length == 0 && stakedSelected.length == 0 && <div className="text-center font-console pt-2 pb-2 text-red text-xl">Select tokens to stake, shear, unstake or burn<br></br>(burn will charge 5% MOVE)</div>}
                 {unstakedSelected.length > 0 && <div className="flex flex-row space-x-4">
-                  {/* <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
-                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled>
-                    <div className="text-center font-console pt-1" onClick={stake_nft}>Stake</div>
-                  </div> */}
+                  <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
+                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled
+                    onClick={stake_nft}>
+                    <div className="text-center font-console pt-1">
+                      {isStaking ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Stake</span>}
+                    </div>
+                  </div>
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={() => burn_nft(unstakedSelected)}>
