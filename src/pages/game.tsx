@@ -48,7 +48,7 @@ export default function Game() {
   const [unstakedChicken, setUnstakedChicken] = useState<Array<{ objectId: string, index: number, url: string, is_chicken: boolean }>>([]);
   const [collectionSupply, setCollectionSupply] = useState(0);
   const [mintAmount, setMintAmount] = useState(1);
-  // const [eggBalance, setEggBalance] = useState(0);
+  const [eggBalance, setEggBalance] = useState(0);
   const [unstakedSelected, setUnstakedSelected] = useState<Array<string>>([])
 
   const [barnStakedObject, setBarnStakedObject] = useState<string>('')
@@ -262,7 +262,6 @@ export default function Game() {
 
   async function stake_nft() {
     setIsStaking(true)
-    console.log(unstakedSelected)
     const txb = new TransactionBlock();
     txb.moveCall({
       target: `${FoxGamePackageId}::fox::add_many_to_barn_and_pack`,
@@ -538,21 +537,22 @@ export default function Game() {
 
   // get egg balance
   useEffect(() => {
-    // if (isConnected) {
-    //   (async () => {
-    //     // const balanceObjects = await sui_client.getBalance(account!.address, `${FoxGamePackageId}::egg::EGG`)
-    //     // console.log(balanceObjects)
-    //     const balanceObjects = await provider.getBalance({ owner: account!.address, coinType: `${FoxGamePackageId}::egg::EGG` })
-    //     // const balances = balanceObjects.filter(item => item.status === 'Exists').map((item: any) => parseInt(item.details.data.fields.balance))
-    //     // const initialValue = 0;
-    //     // const sumWithInitial = balances.reduce(
-    //     //   (accumulator, currentValue) => accumulator + currentValue,
-    //     //   initialValue
-    //     // )
-    //     setEggBalance(balanceObjects.totalBalance);
-    //   })()
-    // }
-  }, [isConnected, mintTx, unstakeTx])
+    if (isConnected) {
+      (async () => {
+        // const balanceObjects = await sui_client.getBalance(account!.address, `${FoxGamePackageId}::egg::EGG`)
+        // console.log(balanceObjects)
+        const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${FoxGamePackageId}::egg::EGG` })
+        console.log(balanceObjects)
+        // const balances = balanceObjects.filter(item => item.status === 'Exists').map((item: any) => parseInt(item.details.data.fields.balance))
+        // const initialValue = 0;
+        // const sumWithInitial = balances.reduce(
+        //   (accumulator, currentValue) => accumulator + currentValue,
+        //   initialValue
+        // )
+        setEggBalance(parseInt(balanceObjects.totalBalance));
+      })()
+    }
+  }, [isConnected, unstakeTx])
 
   function addStaked(item: string) {
     setUnstakedSelected([])
@@ -670,9 +670,9 @@ export default function Game() {
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
               <div className="flex flex-col items-center">
-                {/* <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: {(eggBalance / 1000000000).toFixed(2)} $EGG</div> */}
+                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red">{numberWithCommas((eggBalance % 1000000000))}</span> EGG</div>
                 <div className="h-4"></div>
-                <div className="text-center font-console pt-1 text-red text-2xl">Owned</div>
+                <div className="text-center font-console pt-1 text-red text-2xl">UNSTAKED</div>
                 <div className="h-4"></div>
                 <div className="w-full" style={{ borderWidth: "0px 0px 4px 4px", borderTopStyle: "initial", borderRightStyle: "initial", borderBottomStyle: "solid", borderLeftStyle: "solid", borderTopColor: "initial", borderRightColor: "initial", borderBottomColor: "rgb(42, 35, 30)", borderLeftColor: "rgb(42, 35, 30)", borderImage: "initial", padding: "2px", opacity: "1" }}>
                   <div className="text-red font-console">CAN STAKE</div>
