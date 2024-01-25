@@ -40,6 +40,10 @@ export default function Game() {
 
   const [moveAmount, setMoveAmount] = useState(0);
 
+  const [isUnstakedAllselected, setIsUnstakedAllselected] = useState(false);
+  const [isStakedFoxAllselected, setIsStakedFoxAllselected] = useState(false);
+  const [isStakedChickenAllselected, setIsStakedChickenAllselected] = useState(false);
+
   const [cost, setCost] = useState(0);
 
   const MAX_TOKEN = 2000;
@@ -482,7 +486,7 @@ export default function Game() {
   function chunkArray(array: any[], chunkSize: number) {
     return Array.from(
       { length: Math.ceil(array.length / chunkSize) },
-      (_, index) => array.slice(index * chunkSize, (index + 1) * chunkSize)   
+      (_, index) => array.slice(index * chunkSize, (index + 1) * chunkSize)
     );
   }
 
@@ -498,7 +502,7 @@ export default function Game() {
           const chicken_staked = dfObject.data.content.fields.value
           const chunks = chunkArray(chicken_staked, 50);
           let chicken_stakes: any = [];
-          for(const chunk of chunks) {
+          for (const chunk of chunks) {
             const chunk_chicken_stakes = await client.multiGetObjects({ ids: chunk, options: { showContent: true } });
             chicken_stakes = chicken_stakes.concat(chunk_chicken_stakes);
           }
@@ -532,7 +536,7 @@ export default function Game() {
           const fox_staked = dfObject.data.content.fields.value
           const chunks = chunkArray(fox_staked, 50);
           let fox_stakes: any = [];
-          for(const chunk of chunks) {
+          for (const chunk of chunks) {
             const chunk_fox_stakes = await client.multiGetObjects({ ids: chunk, options: { showContent: true } });
             fox_stakes = fox_stakes.concat(chunk_fox_stakes);
           }
@@ -558,15 +562,8 @@ export default function Game() {
   useEffect(() => {
     if (isConnected) {
       (async () => {
-        // console.log(balanceObjects)
         const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${OriginFoxGamePackageId}::egg::EGG` })
         console.log(balanceObjects)
-        // const balances = balanceObjects.filter(item => item.status === 'Exists').map((item: any) => parseInt(item.details.data.fields.balance))
-        // const initialValue = 0;
-        // const sumWithInitial = balances.reduce(
-        //   (accumulator, currentValue) => accumulator + currentValue,
-        //   initialValue
-        // )
         setEggBalance(parseInt(balanceObjects.totalBalance));
       })()
     }
@@ -577,9 +574,29 @@ export default function Game() {
     setStakedSelected([...stakedSelected, item])
   }
 
+  function addStakedFox() {
+    setUnstakedSelected([])
+    setStakedSelected([...stakedSelected, ...stakedFox.map(item => item.objectId)])
+  }
+
+  function addStakedChicken() {
+    setUnstakedSelected([])
+    setStakedSelected([...stakedSelected, ...stakedChicken.map(item => item.objectId)])
+  }
+
   function removeStaked(item: string) {
     setUnstakedSelected([])
     setStakedSelected(stakedSelected.filter(i => i !== item))
+  }
+
+  function removeStakedChicken() {
+    setUnstakedSelected([])
+    setStakedSelected(stakedSelected.filter(i => stakedFox.map(i => i.objectId).includes(i)))
+  }
+
+  function removeStakedFox() {
+    setUnstakedSelected([])
+    setStakedSelected(stakedSelected.filter(i => stakedChicken.map(i => i.objectId).includes(i)))
   }
 
   function addUnstaked(item: string) {
@@ -590,6 +607,16 @@ export default function Game() {
   function removeUnstaked(item: string) {
     setStakedSelected([])
     setUnstakedSelected(unstakedSelected.filter(i => i !== item))
+  }
+
+  function addAllUnstaked() {
+    setStakedSelected([])
+    setUnstakedSelected([...unstakedChicken.map(item => item.objectId), ...unstakedFox.map(item => item.objectId)])
+  }
+
+  function removeAllUnstaked() {
+    setStakedSelected([])
+    setUnstakedSelected([])
   }
 
   function renderUnstaked(item: any, _type: string) {
@@ -693,7 +720,13 @@ export default function Game() {
                 <div className="text-center font-console pt-1 text-red text-2xl">UNSTAKED</div>
                 <div className="h-4"></div>
                 <div className="w-full" style={{ borderWidth: "0px 0px 4px 4px", borderTopStyle: "initial", borderRightStyle: "initial", borderBottomStyle: "solid", borderLeftStyle: "solid", borderTopColor: "initial", borderRightColor: "initial", borderBottomColor: "rgb(42, 35, 30)", borderLeftColor: "rgb(42, 35, 30)", borderImage: "initial", padding: "2px", opacity: "1" }}>
-                  <div className="text-red font-console">CAN STAKE</div>
+                  <div className="flex">
+                    <div className="text-red font-console">CAN STAKE</div>
+                    {isUnstakedAllselected ?
+                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeAllUnstaked(); setIsUnstakedAllselected(false) }}>Unselect all</div> :
+                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { addAllUnstaked(); setIsUnstakedAllselected(true) }}>Select all</div>
+                    }
+                  </div>
                   {unstakedFox.length == 0 && unstakedChicken.length == 0 ? <>
                     <div className="text-red font-console text-xs">NO TOKENS</div>
                   </> : <div className="overflow-x-scroll">
@@ -706,7 +739,13 @@ export default function Game() {
                 <div className="text-center font-console pt-1 text-red text-2xl">STAKED</div>
                 <div className="h-4"></div>
                 <div className="w-full" style={{ borderWidth: "0px 0px 4px 4px", borderTopStyle: "initial", borderRightStyle: "initial", borderBottomStyle: "solid", borderLeftStyle: "solid", borderTopColor: "initial", borderRightColor: "initial", borderBottomColor: "rgb(42, 35, 30)", borderLeftColor: "rgb(42, 35, 30)", borderImage: "initial", padding: "2px", opacity: "1" }}>
-                  <div className="text-red font-console">BARN</div>
+                  <div className="flex">
+                    <div className="text-red font-console">BARN</div>
+                    {isStakedChickenAllselected ?
+                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedChicken(); setIsStakedChickenAllselected(false) }}>Unselect all</div> :
+                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedChicken(); setIsStakedChickenAllselected(true) }}>Select all</div>
+                    }
+                  </div>
                   {stakedChicken.length == 0 ? <>
                     <div className="text-red font-console text-xs">NO TOKENS</div>
                   </> : <div className="overflow-x-scroll">
@@ -716,7 +755,13 @@ export default function Game() {
                 </div>
                 <div className="h-2"></div>
                 <div className="w-full" style={{ borderWidth: "0px 0px 4px 4px", borderTopStyle: "initial", borderRightStyle: "initial", borderBottomStyle: "solid", borderLeftStyle: "solid", borderTopColor: "initial", borderRightColor: "initial", borderBottomColor: "rgb(42, 35, 30)", borderLeftColor: "rgb(42, 35, 30)", borderImage: "initial", padding: "2px", opacity: "1" }}>
-                  <div className="text-red font-console">FOX PACK</div>
+                  <div className="flex">
+                    <div className="text-red font-console">FOX PACK</div>
+                    {isStakedFoxAllselected ?
+                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedFox(); setIsStakedFoxAllselected(false) }}>Unselect all</div> :
+                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedFox(); setIsStakedFoxAllselected(true) }}>Select all</div>
+                    }
+                  </div>
                   {stakedFox.length == 0 ? <>
                     <div className="text-red font-console text-xs">NO TOKENS</div>
                   </> : <div className="overflow-x-scroll">
