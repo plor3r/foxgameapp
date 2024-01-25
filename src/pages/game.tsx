@@ -15,7 +15,6 @@ import {
   useSuiClient,
 } from '@mysten/dapp-kit';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { bcs } from '@mysten/bcs';
 
 
 export default function Game() {
@@ -585,7 +584,7 @@ export default function Game() {
     </div>
   }
 
-  function renderStaked(item: any, type: string) {
+  function renderStaked(item: any, _type: string) {
     const itemIn = stakedSelected.includes(item.objectId);
     return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
       <div className="flex flex-col items-center">
@@ -693,7 +692,7 @@ export default function Game() {
                   {stakedChicken.length == 0 ? <>
                     <div className="text-red font-console text-xs">NO TOKENS</div>
                   </> : <div className="overflow-x-scroll">
-                    {stakedChicken.map((item, i) => renderStaked(item, "chicken"))}
+                    {stakedChicken.map(item => renderStaked(item, "chicken"))}
                   </div>
                   }
                 </div>
@@ -703,7 +702,7 @@ export default function Game() {
                   {stakedFox.length == 0 ? <>
                     <div className="text-red font-console text-xs">NO TOKENS</div>
                   </> : <div className="overflow-x-scroll">
-                    {stakedFox.map((item, i) => renderStaked(item, "fox"))}
+                    {stakedFox.map(item => renderStaked(item, "fox"))}
                   </div>
                   }
                 </div>
