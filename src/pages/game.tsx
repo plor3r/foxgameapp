@@ -479,6 +479,13 @@ export default function Game() {
     })()
   })
 
+  function chunkArray(array: any[], chunkSize: number) {
+    return Array.from(
+      { length: Math.ceil(array.length / chunkSize) },
+      (_, index) => array.slice(index * chunkSize, (index + 1) * chunkSize)   
+    );
+  }
+
   // get bark.staked object
   useEffect(() => {
     if (barnStakedObject !== '' && account !== null) {
@@ -489,7 +496,13 @@ export default function Game() {
             return
           }
           const chicken_staked = dfObject.data.content.fields.value
-          const chicken_stakes = await client.multiGetObjects({ ids: chicken_staked, options: { showContent: true } })
+          const chunks = chunkArray(chicken_staked, 50);
+          let chicken_stakes: any = [];
+          for(const chunk of chunks) {
+            const chunk_chicken_stakes = await client.multiGetObjects({ ids: chunk, options: { showContent: true } });
+            console.log(chunk_chicken_stakes)
+            chicken_stakes = chicken_stakes.concat(chunk_chicken_stakes);
+          }
           const staked = chicken_stakes.map((item: any) => {
             let foc = item.data.content.fields.item
             return {
