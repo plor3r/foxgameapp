@@ -77,6 +77,10 @@ export default function Game() {
     }
   }
 
+  function all_minted() {
+    alert("All NFTs have been minted, please wait for next GEN.")
+  }
+
   function numberWithCommas(x: number) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
@@ -174,6 +178,8 @@ export default function Game() {
   }
 
   async function mint_nft() {
+    all_minted()
+    return;
     setIsMinting(true)
     const [objects, totalAmount] = await fetch_movescription_greater_than(mintAmount * 10000);
     const txb = new TransactionBlock();
