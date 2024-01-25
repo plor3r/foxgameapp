@@ -5,6 +5,7 @@ import {
   OriginFoxGamePackageId,
   FoxGameGlobal,
   MovescriptionTicketRecordId,
+  EggTreasuryCap,
 } from "../config";
 import { useState, useEffect } from "react";
 import {
@@ -14,6 +15,7 @@ import {
   useSuiClient,
 } from '@mysten/dapp-kit';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { bcs } from '@mysten/bcs';
 
 
 export default function Game() {
@@ -26,7 +28,10 @@ export default function Game() {
 
   const [stakeTx, setStakeTx] = useState('');
   const [isStaking, setIsStaking] = useState(false);
-  const [claimTx] = useState('');
+
+  const [unstakeTx, setUnstakeTx] = useState('');
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [isUnstaking, setIsUnstaking] = useState(false);
 
   const [moveTx, setMoveTx] = useState('');
   const [isMintingMove, setIsMintingMove] = useState(false);
@@ -50,8 +55,8 @@ export default function Game() {
   const [barnStakedObject, setBarnStakedObject] = useState<string>('')
   const [packStakedObject, setPackStakedObject] = useState<string>('')
 
-  const [stakedChicken, _setStakedChicken] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
-  const [stakedFox, _setStakedFox] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
+  const [stakedChicken, setStakedChicken] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
+  const [stakedFox, setStakedFox] = useState<Array<{ objectId: string, index: number, url: string }>>([]);
   const [stakedSelected, setStakedSelected] = useState<Array<string>>([]);
 
   const [_suiCost, setSuiCost] = useState<bigint>(BigInt(0));
@@ -122,7 +127,6 @@ export default function Game() {
       const element: any = objects.data[index];
       objectIds.push(element.data.objectId)
       totalAmount += parseInt(element.data.content.fields.amount)
-      console.log(totalAmount)
       if (totalAmount >= amount) break
     }
     if (totalAmount < amount) {
@@ -222,19 +226,16 @@ export default function Game() {
     );
   }
 
-  async function burn_nft(foc: any) {
+  async function burn_nft() {
     setIsBurning(true)
     const txb = new TransactionBlock();
-    for (let index = 0; index < foc.length; index++) {
-      const element = foc[index];
-      txb.moveCall({
-        target: `${FoxGamePackageId}::fox::burn`,
-        arguments: [
-          txb.object(FoxGameGlobal),
-          txb.object(element)
-        ],
-      });
-    }
+    txb.moveCall({
+      target: `${FoxGamePackageId}::fox::burn_many`,
+      arguments: [
+        txb.object(FoxGameGlobal),
+        txb.makeMoveVec({ objects: unstakedSelected.map((item: any) => txb.object(item)) }),
+      ],
+    });
     signAndExecuteTransactionBlock(
       {
         transactionBlock: txb,
@@ -268,7 +269,7 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::add_many_to_barn_and_pack`,
       arguments: [
         txb.object(FoxGameGlobal),
-        unstakedSelected.map(item => txb.object(item)) as any,
+        txb.makeMoveVec({ objects: unstakedSelected.map(item => txb.object(item)) }),
         txb.object('0x6'),
       ],
     });
@@ -299,43 +300,82 @@ export default function Game() {
 
   async function unstake_nft() {
     check_if_connected()
-    // try {
-    //   const resData = await signAndExecuteTransaction(
-    //     {
-    //       transaction: {
-    //         kind: 'moveCall',
-    //         data: unstake(),
-    //       }
-    //     }
-    //   )
-    //   if (resData.effects.status.status !== "success") {
-    //     console.log('failed', resData);
-    //   }
-    //   setClaimTx('https://explorer.sui.io/transaction/' + resData.certificate.transactionDigest)
-    //   setStakedSelected([])
-    // } catch (e) {
-    //   console.error('failed', e);
-    // }
+    setIsUnstaking(true)
+    const txb = new TransactionBlock();
+    txb.moveCall({
+      target: `${FoxGamePackageId}::fox::claim_many_from_barn_and_pack`,
+      arguments: [
+        txb.object(FoxGameGlobal),
+        txb.object(EggTreasuryCap),
+        txb.makeMoveVec({ objects: stakedSelected.map(item => item) }),
+        txb.pure(true),
+        txb.object('0x6'),
+      ],
+    });
+    signAndExecuteTransactionBlock(
+      {
+        transactionBlock: txb,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction block', result);
+          setUnstakeTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setStakedSelected([])
+          setIsUnstaking(false)
+        },
+        onError: (error) => {
+          console.log(error);
+          setStakedSelected([])
+          setIsUnstaking(false)
+        },
+        onSettled: (data) => {
+          console.log(data);
+          setStakedSelected([])
+          setIsUnstaking(false)
+        }
+      },
+    );
   }
 
   async function claim_egg() {
     check_if_connected()
-    // try {
-    //   const resData = await signAndExecuteTransaction(
-    //     {
-    //       transaction: {
-    //         kind: 'moveCall',
-    //         data: claim(),
-    //       }
-    //     }
-    //   )
-    //   if (resData.effects.status.status !== "success") {
-    //     console.log('failed', resData);
-    //   }
-    //   setClaimTx('https://explorer.sui.io/transaction/' + resData.certificate.transactionDigest)
-    // } catch (e) {
-    //   console.error('failed', e);
-    // }
+    setIsClaiming(true)
+    const txb = new TransactionBlock();
+    console.log(txb.makeMoveVec({ objects: stakedSelected.map(item=> txb.object(item)) }))
+    txb.moveCall({
+      target: `${FoxGamePackageId}::fox::claim_many_from_barn_and_pack`,
+      arguments: [
+        txb.object(FoxGameGlobal),
+        txb.object(EggTreasuryCap),
+        txb.makeMoveVec({ objects: stakedSelected.map(item=> txb.object(item)) }),
+        txb.pure(false),
+        txb.object('0x6'),
+      ],
+      // typeArguments: [`${OriginFoxGamePackageId}::egg::EGG`]
+    });
+    signAndExecuteTransactionBlock(
+      {
+        transactionBlock: txb,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction block', result);
+          // setUnstakeTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setStakedSelected([])
+          setIsClaiming(false)
+        },
+        onError: (error) => {
+          console.log(error);
+          setStakedSelected([])
+          setIsClaiming(false)
+        },
+        onSettled: (data) => {
+          console.log(data);
+          setStakedSelected([])
+          setIsClaiming(false)
+        }
+      },
+    );
   }
 
   async function getCollectionSupply() {
@@ -426,12 +466,12 @@ export default function Game() {
       setUnstakedFox([])
       setUnstakedChicken([])
     }
-  }, [isConnected, mintTx, stakeTx, claimTx])
+  }, [isConnected, mintTx, stakeTx, unstakeTx])
 
   // get globla object
   useEffect(() => {
     (async () => {
-      const globalObject: any = await client.getObject({ id: FoxGameGlobal, options: {showContent: true} })
+      const globalObject: any = await client.getObject({ id: FoxGameGlobal, options: { showContent: true } })
       const barn_staked = globalObject.data.content.fields.barn.fields.id.id
       setBarnStakedObject(barn_staked)
 
@@ -442,59 +482,61 @@ export default function Game() {
 
   // get bark.staked object
   useEffect(() => {
-    // if (barnStakedObject !== '' && account !== null) {
-    //   (async () => {
-    //     try {
-    //       const dfObject: any = await provider.getDynamicFields({ parentId: barnStakedObject });
-    //       if (dfObject != null) {
-    //         const chicken_staked = dfObject.details.data.fields.value
-    //         const chicken_stakes = await provider.multiGetObjects({ ids: chicken_staked })
-    //         const staked = chicken_stakes.filter(item => item.error).map((item: any) => {
-    //           let foc = item.details.data.fields.item
-    //           return {
-    //             objectId: foc.fields.id.id,
-    //             index: parseInt(foc.fields.index),
-    //             url: foc.fields.url,
-    //           }
-    //         })
-    //         setStakedChicken(staked)
-    //       }
-    //     }
-    //     catch (e) {
-    //       setStakedChicken([])
-    //       console.log(e)
-    //     }
-    //   })()
-    // }
-  }, [isConnected, barnStakedObject, mintTx, stakeTx, claimTx])
+    if (barnStakedObject !== '' && account !== null) {
+      (async () => {
+        try {
+          const dfObject: any = await client.getDynamicFieldObject({ parentId: barnStakedObject, name: { type: 'address', value: account!.address } })
+          if (dfObject.error) {
+            return
+          }
+          const chicken_staked = dfObject.data.content.fields.value
+          const chicken_stakes = await client.multiGetObjects({ ids: chicken_staked, options: { showContent: true } })
+          const staked = chicken_stakes.map((item: any) => {
+            let foc = item.data.content.fields.item
+            return {
+              objectId: foc.fields.id.id,
+              index: parseInt(foc.fields.index),
+              url: foc.fields.url,
+            }
+          })
+          setStakedChicken(staked)
+        }
+        catch (e) {
+          setStakedChicken([])
+          console.log(e)
+        }
+      })()
+    }
+  }, [isConnected, barnStakedObject, mintTx, stakeTx, unstakeTx])
 
   // get pack.staked object
   useEffect(() => {
-    // if (packStakedObject !== '' && account !== null) {
-    //   (async () => {
-    //     try {
-    //       const objects: any = await provider.getDynamicFields({ parentId: packStakedObject });
-    //       if (objects != null) {
-    //         const fox_staked = objects.details.data.fields.value
-    //         const fox_stakes = await provider.multiGetObjects({ ids: fox_staked })
-    //         const staked = fox_stakes.filter(item => item.error).map((item: any) => {
-    //           let foc = item.details.data.fields.item
-    //           return {
-    //             objectId: foc.fields.id.id,
-    //             index: parseInt(foc.fields.index),
-    //             url: foc.fields.url,
-    //           }
-    //         })
-    //         setStakedFox(staked)
-    //       }
-    //     }
-    //     catch (e) {
-    //       setStakedFox([])
-    //       console.log(e)
-    //     }
-    //   })()
-    // }
-  }, [isConnected, packStakedObject, mintTx, stakeTx, claimTx])
+    if (packStakedObject !== '' && account !== null) {
+      (async () => {
+        try {
+          const dfObject: any = await client.getDynamicFieldObject({ parentId: packStakedObject, name: { type: 'address', value: account!.address } })
+          if (dfObject.error) {
+            return
+          }
+          const fox_staked = dfObject.data.content.fields.value
+          const fox_stakes = await client.multiGetObjects({ ids: fox_staked, options: { showContent: true } })
+          const staked = fox_stakes.map((item: any) => {
+            let foc = item.data.content.fields.item
+            return {
+              objectId: foc.fields.id.id,
+              index: parseInt(foc.fields.index),
+              url: foc.fields.url,
+            }
+          })
+          setStakedFox(staked)
+        }
+        catch (e) {
+          setStakedFox([])
+          console.log(e)
+        }
+      })()
+    }
+  }, [isConnected, packStakedObject, mintTx, stakeTx, unstakeTx])
 
   // get egg balance
   useEffect(() => {
@@ -512,7 +554,7 @@ export default function Game() {
     //     setEggBalance(balanceObjects.totalBalance);
     //   })()
     // }
-  }, [isConnected, mintTx, claimTx])
+  }, [isConnected, mintTx, unstakeTx])
 
   function addStaked(item: string) {
     setUnstakedSelected([])
@@ -681,7 +723,7 @@ export default function Game() {
                   </div>
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
-                    onClick={() => burn_nft(unstakedSelected)}>
+                    onClick={burn_nft}>
                     <div className="text-center font-console pt-1">
                       {isBurning ?
                         <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
@@ -693,13 +735,21 @@ export default function Game() {
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={claim_egg}>
-                    <div className="text-center font-console pt-1" >Collect $EGG</div>
+                    <div className="text-center font-console pt-1" >
+                      {isClaiming ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Collect $EGG</span>}
+                    </div>
                   </div>
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
                     onClick={unstake_nft}
                   >
-                    <div className="text-center font-console pt-1" >Collect $WOOL & Unstake</div>
+                    <div className="text-center font-console pt-1" >
+                      {isUnstaking ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Collect $EGG and Unstake</span>}
+                    </div>
                   </div>
                 </div>}
               </div>
