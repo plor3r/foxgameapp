@@ -29,8 +29,10 @@ export default function Game() {
   const [isStaking, setIsStaking] = useState(false);
 
   const [unstakeTx, setUnstakeTx] = useState('');
-  const [isClaiming, setIsClaiming] = useState(false);
   const [isUnstaking, setIsUnstaking] = useState(false);
+
+  const [claimTx, setClaimTx] = useState('');
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const [moveTx, setMoveTx] = useState('');
   const [isMintingMove, setIsMintingMove] = useState(false);
@@ -357,7 +359,7 @@ export default function Game() {
       {
         onSuccess: (result) => {
           console.log('executed transaction block', result);
-          // setUnstakeTx(`https://suiexplorer.com/txblock/${result.digest}`);
+          setClaimTx(`https://suiexplorer.com/txblock/${result.digest}`);
           setStakedSelected([])
           setIsClaiming(false)
         },
@@ -551,7 +553,7 @@ export default function Game() {
         setEggBalance(parseInt(balanceObjects.totalBalance));
       })()
     }
-  }, [isConnected, unstakeTx])
+  }, [isConnected, claimTx, unstakeTx])
 
   function addStaked(item: string) {
     setUnstakedSelected([])

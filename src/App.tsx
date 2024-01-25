@@ -1,7 +1,7 @@
 import {
   Outlet,
   RouterProvider,
-  createBrowserRouter,
+  createHashRouter,
   redirect,
 } from "react-router-dom";
 // import { ConnectButton } from "@mysten/dapp-kit";
@@ -22,7 +22,7 @@ function MainLayout() {
 }
 
 export default function App() {
-  const router = createBrowserRouter([
+  const router = createHashRouter([
     {
       path: "/",
       element: <MainLayout />,
