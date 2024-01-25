@@ -559,7 +559,7 @@ export default function Game() {
     if (isConnected) {
       (async () => {
         // console.log(balanceObjects)
-        const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${FoxGamePackageId}::egg::EGG` })
+        const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${OriginFoxGamePackageId}::egg::EGG` })
         console.log(balanceObjects)
         // const balances = balanceObjects.filter(item => item.status === 'Exists').map((item: any) => parseInt(item.details.data.fields.balance))
         // const initialValue = 0;
