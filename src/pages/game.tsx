@@ -539,7 +539,6 @@ export default function Game() {
   useEffect(() => {
     if (isConnected) {
       (async () => {
-        // const balanceObjects = await sui_client.getBalance(account!.address, `${FoxGamePackageId}::egg::EGG`)
         // console.log(balanceObjects)
         const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${FoxGamePackageId}::egg::EGG` })
         console.log(balanceObjects)
@@ -670,7 +669,7 @@ export default function Game() {
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
               <div className="flex flex-col items-center">
-                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red">{numberWithCommas((eggBalance % 1000000000))}</span> EGG</div>
+                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red">{numberWithCommas(Math.ceil(eggBalance / 1000000000))}</span> EGG</div>
                 <div className="h-4"></div>
                 <div className="text-center font-console pt-1 text-red text-2xl">UNSTAKED</div>
                 <div className="h-4"></div>
