@@ -500,7 +500,6 @@ export default function Game() {
           let chicken_stakes: any = [];
           for(const chunk of chunks) {
             const chunk_chicken_stakes = await client.multiGetObjects({ ids: chunk, options: { showContent: true } });
-            console.log(chunk_chicken_stakes)
             chicken_stakes = chicken_stakes.concat(chunk_chicken_stakes);
           }
           const staked = chicken_stakes.map((item: any) => {
@@ -531,7 +530,12 @@ export default function Game() {
             return
           }
           const fox_staked = dfObject.data.content.fields.value
-          const fox_stakes = await client.multiGetObjects({ ids: fox_staked, options: { showContent: true } })
+          const chunks = chunkArray(fox_staked, 50);
+          let fox_stakes: any = [];
+          for(const chunk of chunks) {
+            const chunk_fox_stakes = await client.multiGetObjects({ ids: chunk, options: { showContent: true } });
+            fox_stakes = fox_stakes.concat(chunk_fox_stakes);
+          }
           const staked = fox_stakes.map((item: any) => {
             let foc = item.data.content.fields.item
             return {
