@@ -307,7 +307,7 @@ export default function Game() {
       arguments: [
         txb.object(FoxGameGlobal),
         txb.object(EggTreasuryCap),
-        txb.makeMoveVec({ objects: stakedSelected.map(item => item) }),
+        txb.pure(stakedSelected),
         txb.pure(true),
         txb.object('0x6'),
       ],
@@ -341,13 +341,12 @@ export default function Game() {
     check_if_connected()
     setIsClaiming(true)
     const txb = new TransactionBlock();
-    console.log(txb.makeMoveVec({ objects: stakedSelected.map(item=> txb.object(item)) }))
     txb.moveCall({
       target: `${FoxGamePackageId}::fox::claim_many_from_barn_and_pack`,
       arguments: [
         txb.object(FoxGameGlobal),
         txb.object(EggTreasuryCap),
-        txb.makeMoveVec({ objects: stakedSelected.map(item=> txb.object(item)) }),
+        txb.pure(stakedSelected),
         txb.pure(false),
         txb.object('0x6'),
       ],
