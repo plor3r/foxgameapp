@@ -1,10 +1,11 @@
 import {
   NETWORK,
+  OriginMovescriptionPackageId,
   MovescriptionPackageId,
   FoxGamePackageId,
   OriginFoxGamePackageId,
   FoxGameGlobal,
-  MovescriptionTicketRecordId,
+  MovescriptionTicketRecordV2Id,
   EggTreasuryCap,
 } from "../config";
 import { useState, useEffect } from "react";
@@ -94,7 +95,7 @@ export default function Game() {
         filter: {
           MatchAll: [
             {
-              StructType: `${MovescriptionPackageId}::movescription::Movescription`,
+              StructType: `${OriginMovescriptionPackageId}::movescription::Movescription`,
             },
             {
               AddressOwner: account!.address,
@@ -119,7 +120,7 @@ export default function Game() {
       filter: {
         MatchAll: [
           {
-            StructType: `${MovescriptionPackageId}::movescription::Movescription`,
+            StructType: `${OriginMovescriptionPackageId}::movescription::Movescription`,
           },
           {
             AddressOwner: account!.address,
@@ -151,8 +152,8 @@ export default function Game() {
     const mint_fee = 0.1 * 1_000_000_000;
     const [coin] = txb.splitCoins(txb.gas, [mint_fee]);
     txb.moveCall({
-      target: `${MovescriptionPackageId}::movescription::mint`,
-      arguments: [txb.object(MovescriptionTicketRecordId), txb.pure("MOVE"), coin, txb.object('0x6')],
+      target: `${MovescriptionPackageId}::epoch_bus_factory::mint`,
+      arguments: [txb.object(MovescriptionTicketRecordV2Id), coin, txb.object('0x6')],
     });
     signAndExecuteTransactionBlock(
       {
