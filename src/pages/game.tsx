@@ -2,10 +2,11 @@ import {
   NETWORK,
   OriginMovescriptionPackageId,
   MovescriptionPackageId,
+  MovescriptionMOVETicketRecordV2Id,
   FoxGamePackageId,
   OriginFoxGamePackageId,
   FoxGameGlobal,
-  MovescriptionTicketRecordV2Id,
+  FoxGameTickRecordV2Id,
   EggTreasuryCap,
 } from "../config";
 import { useState, useEffect } from "react";
@@ -25,6 +26,7 @@ export default function Game() {
 
   const [mintTx, setMintTx] = useState('');
   const [isMinting, setIsMinting] = useState(false);
+  const [isStakeMinting, setIsStakeMinting] = useState(false);
 
   const [stakeTx, setStakeTx] = useState('');
   const [isStaking, setIsStaking] = useState(false);
@@ -145,7 +147,7 @@ export default function Game() {
     return [objectIds, totalAmount]
   }
 
-  async function mint_movescription() {
+  async function mint_test_movescription() {
     setIsMintingMove(true)
     const txb = new TransactionBlock();
     // == deposit
@@ -153,7 +155,7 @@ export default function Game() {
     const [coin] = txb.splitCoins(txb.gas, [mint_fee]);
     txb.moveCall({
       target: `${MovescriptionPackageId}::epoch_bus_factory::mint`,
-      arguments: [txb.object(MovescriptionTicketRecordV2Id), coin, txb.object('0x6')],
+      arguments: [txb.object(MovescriptionMOVETicketRecordV2Id), coin, txb.object('0x6')],
     });
     signAndExecuteTransactionBlock(
       {
@@ -178,10 +180,16 @@ export default function Game() {
     );
   }
 
-  async function mint_nft() {
-    all_minted()
-    return;
-    setIsMinting(true)
+  function setMinting(stake: boolean, value: boolean) {
+    if (stake) {
+      setIsStakeMinting(value)
+    } else {
+      setIsMinting(value)
+    }
+  }
+
+  async function mint_nft(stake: boolean) {
+    setMinting(stake, true)
     const [objects, totalAmount] = await fetch_movescription_greater_than(mintAmount * 10000);
     const txb = new TransactionBlock();
 
@@ -209,8 +217,9 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::mint`,
       arguments: [
         txb.object(FoxGameGlobal),
+        txb.object(FoxGameTickRecordV2Id),
         txb.pure(mintAmount),
-        txb.pure(false),
+        txb.pure(stake),
         txb.object(move),
         txb.object('0x6')
       ],
@@ -224,15 +233,15 @@ export default function Game() {
         onSuccess: (result) => {
           console.log('executed transaction block', result);
           setMintTx(`https://suiexplorer.com/txblock/${result.digest}`);
-          setIsMinting(false);
+          setMinting(stake, false);
         },
         onError: (error) => {
           console.log(error);
-          setIsMinting(false);
+          setMinting(stake, false);
         },
         onSettled: (data) => {
           console.log(data);
-          setIsMinting(false);
+          setMinting(stake, false);
         }
       },
     );
@@ -245,6 +254,7 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::burn_many`,
       arguments: [
         txb.object(FoxGameGlobal),
+        txb.object(FoxGameTickRecordV2Id),
         txb.makeMoveVec({ objects: unstakedSelected.map((item: any) => txb.object(item)) }),
       ],
     });
@@ -444,28 +454,28 @@ export default function Game() {
   useEffect(() => {
     if (isConnected) {
       (async () => {
-        const objects = await client.getOwnedObjects({
-          owner: account!.address,
-          filter: {
-            MatchAll: [
-              {
-                StructType: `${OriginFoxGamePackageId}::token::FoxOrChicken`,
-              },
-              {
-                AddressOwner: account!.address,
-              }
-            ]
-          },
-          options: {
-            showDisplay: true,
-            showContent: true,
-          },
-        })
-        const unstaked = objects.data.map((item: any) => {
+        let hasNextPage = true;
+        let allObjects: any[] = []
+        while (hasNextPage) {
+          const objects = await client.getOwnedObjects({
+            owner: account!.address,
+            filter: {
+              MatchAll: [
+                { StructType: `${OriginMovescriptionPackageId}::movescription::Movescription` },
+                { AddressOwner: account!.address }
+              ]
+            },
+            options: { showContent: true },
+          })
+          allObjects = allObjects.concat(objects.data.filter((item: any) => item.data.content.fields.tick === 'WOLF'))
+          hasNextPage = objects.hasNextPage
+        }
+        const unstaked = allObjects.map((item: any) => {
           return {
             objectId: item.data.objectId,
             index: parseInt(item.data.content.fields.index),
-            url: item.data.display.data.image_url,
+            // url: item.data.display.data.image_url,
+            url: new TextDecoder().decode(new Uint8Array(item.data.content.fields.metadata.fields.content).buffer),
             is_chicken: item.data.content.fields.is_chicken,
           }
         }).sort((n1, n2) => n1.index - n2.index)
@@ -570,7 +580,6 @@ export default function Game() {
     if (isConnected) {
       (async () => {
         const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${OriginFoxGamePackageId}::egg::EGG` })
-        console.log(balanceObjects)
         setEggBalance(parseInt(balanceObjects.totalBalance));
       })()
     }
@@ -683,8 +692,8 @@ export default function Game() {
                 <div className="h-4"></div>
                 <div className="flex flex-row space-x-4">
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
-                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
-                    onClick={mint_nft}
+                    style={{ userSelect: "none", width: "300px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
+                    onClick={() => mint_nft(false)}
                   >
                     <div className="text-center font-console pt-1" >
                       {isMinting ?
@@ -692,15 +701,25 @@ export default function Game() {
                         : <span>Mint</span>}
                     </div>
                   </div>
-                  {/* <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
-                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
-                    onClick={mint_nft_stake}
-                  >
-                    <div className="text-center font-console pt-1" >Mint & Stake</div>
-                  </div> */}
+                </div>
+                <div className="h-4"></div>
+                <div className="flex flex-row space-x-4">
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
-                    style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
-                    onClick={mint_movescription}
+                    style={{ userSelect: "none", width: "300px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
+                    onClick={() => mint_nft(true)}
+                  >
+                    <div className="text-center font-console pt-1" >
+                      {isStakeMinting ?
+                        <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
+                        : <span>Mint & Stake</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="h-4"></div>
+                <div className="flex flex-row space-x-4">
+                  <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
+                    style={{ userSelect: "none", width: "300px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }}
+                    onClick={mint_test_movescription}
                   >
                     <div className="text-center font-console pt-1" >
                       {isMintingMove ?
