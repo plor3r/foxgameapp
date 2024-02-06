@@ -679,7 +679,7 @@ export default function Game() {
     <div style={{ paddingTop: '1px' }}>
       <div className="text-center"><span className="mb-5 text-center title">Fox Game</span>
         {/* {NETWORK === "mainnet" ? <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>Sui</span> */}
-        <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>{NETWORK}</span>
+        <span className="cursor-pointer ml-2 text-red title-upper" style={{ fontSize: "18px", verticalAlign: "100%" }}>{NETWORK} Stage II</span>
       </div>
       <div className="flex flex-wrap items-center space-x-2 justify-center">
         <div className="mb-5 text-sm font-console basis-2/5" style={{ minWidth: '480px' }}>
