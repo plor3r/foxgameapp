@@ -50,7 +50,7 @@ export default function Game() {
   const [cost, setCost] = useState(0);
 
   const MAX_TOKEN = 2000;
-  const PAID_TOKENS = 20000;
+  const PAID_TOKENS = 2000;
   const SingleMintPrice = 10000;
 
   const [unstakedFox, setUnstakedFox] = useState<Array<{ objectId: string, index: number, url: string, is_chicken: boolean }>>([]);
@@ -80,9 +80,9 @@ export default function Game() {
     }
   }
 
-  // function all_minted() {
-  //   alert("All NFTs have been minted, please wait for next GEN.")
-  // }
+  function all_minted() {
+    alert("All NFTs have been minted, please wait for next GEN.")
+  }
 
   function numberWithCommas(x: number) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -189,6 +189,10 @@ export default function Game() {
   }
 
   async function mint_nft(stake: boolean) {
+    if (collectionSupply >= MAX_TOKEN) {
+      all_minted()
+      return
+    }
     setMinting(stake, true)
     const [objects, totalAmount] = await fetch_movescription_greater_than(mintAmount * 10000);
     const txb = new TransactionBlock();
@@ -655,7 +659,7 @@ export default function Game() {
     const itemIn = unstakedSelected.includes(item.objectId);
     return <div key={item.objectId} style={{ marginRight: "5px", marginLeft: "5px", border: itemIn ? "2px solid red" : "2px solid rgb(0,0,0,0)", overflow: 'hidden', display: "inline-block" }}>
       <div className="flex flex-col items-center">
-        <div style={{ fontSize: "0.75rem", height: "1rem" }}>#{item.index}</div>
+        {/* <div style={{ fontSize: "0.75rem", height: "1rem" }}>#{item.index}</div> */}
         <img src={`${item.url}`} width={48} height={48} alt={`${item.objectId}`} onClick={() => itemIn ? removeUnstaked(item.objectId) : addUnstaked(item.objectId)} />
       </div>
     </div>
@@ -746,7 +750,7 @@ export default function Game() {
                 </div>
                 <div className="h-4"></div>
                 <div className="flex flex-row space-x-4">
-                  <div className="text-black text-lg">Your $MOVE amount: <span className="text-red"><CountUp end={moveAmount} /></span> MOVE</div>
+                  <div className="text-black text-lg">Your test $MOVE amount: <span className="text-red"><CountUp end={moveAmount} /></span> MOVE</div>
                 </div>
               </div>
             </div>
@@ -813,7 +817,11 @@ export default function Game() {
                 </div>
                 <div className="h-4"></div>
                 <div className="h-4"></div>
-                {unstakedSelected.length == 0 && stakedSelected.length == 0 && <div className="text-center font-console pt-2 pb-2 text-red text-xl">Select tokens to stake, shear, unstake or burn<br></br>(burn will charge 5% MOVE)</div>}
+                {unstakedSelected.length == 0 && stakedSelected.length == 0
+                  && <div className="text-center font-console pt-2 pb-2 text-red text-xl">
+                    Select to stake, collect, unstake or burn<br />
+                    minimum stake period is 5 Minutes<br />
+                    burn will charge 5% MOVE</div>}
                 {unstakedSelected.length > 0 && <div className="flex flex-row space-x-4">
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
                     style={{ userSelect: "none", width: "200px", borderImage: "url('./wood-frame.svg') 5 / 1 / 0 stretch", borderWidth: "10px" }} aria-disabled
