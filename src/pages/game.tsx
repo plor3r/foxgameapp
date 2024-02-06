@@ -4,10 +4,9 @@ import {
   MovescriptionPackageId,
   MovescriptionMOVETicketRecordV2Id,
   FoxGamePackageId,
-  OriginFoxGamePackageId,
   FoxGameGlobal,
-  FoxGameTickRecordV2Id,
-  EggTreasuryCap,
+  FoxGameWolfTickRecordV2,
+  FoxGameWoolTickRecordV2,
 } from "../config";
 import { useState, useEffect } from "react";
 import {
@@ -80,9 +79,9 @@ export default function Game() {
     }
   }
 
-  function all_minted() {
-    alert("All NFTs have been minted, please wait for next GEN.")
-  }
+  // function all_minted() {
+  //   alert("All NFTs have been minted, please wait for next GEN.")
+  // }
 
   function numberWithCommas(x: number) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -217,14 +216,14 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::mint`,
       arguments: [
         txb.object(FoxGameGlobal),
-        txb.object(FoxGameTickRecordV2Id),
+        txb.object(FoxGameWolfTickRecordV2),
         txb.pure(mintAmount),
         txb.pure(stake),
         txb.object(move),
         txb.object('0x6')
       ],
     });
-    txb.setGasBudget(300_000_000 * mintAmount)
+    txb.setGasBudget(400_000_000 * mintAmount)
     signAndExecuteTransactionBlock(
       {
         transactionBlock: txb,
@@ -254,7 +253,7 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::burn_many`,
       arguments: [
         txb.object(FoxGameGlobal),
-        txb.object(FoxGameTickRecordV2Id),
+        txb.object(FoxGameWolfTickRecordV2),
         txb.makeMoveVec({ objects: unstakedSelected.map((item: any) => txb.object(item)) }),
       ],
     });
@@ -327,7 +326,7 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::claim_many_from_barn_and_pack`,
       arguments: [
         txb.object(FoxGameGlobal),
-        txb.object(EggTreasuryCap),
+        txb.object(FoxGameWoolTickRecordV2),
         txb.pure(stakedSelected),
         txb.pure(true),
         txb.object('0x6'),
@@ -366,12 +365,11 @@ export default function Game() {
       target: `${FoxGamePackageId}::fox::claim_many_from_barn_and_pack`,
       arguments: [
         txb.object(FoxGameGlobal),
-        txb.object(EggTreasuryCap),
+        txb.object(FoxGameWoolTickRecordV2),
         txb.pure(stakedSelected),
         txb.pure(false),
         txb.object('0x6'),
       ],
-      // typeArguments: [`${OriginFoxGamePackageId}::egg::EGG`]
     });
     signAndExecuteTransactionBlock(
       {
@@ -467,7 +465,7 @@ export default function Game() {
             },
             options: { showContent: true },
           })
-          allObjects = allObjects.concat(objects.data.filter((item: any) => item.data.content.fields.tick === 'WOLF'))
+          allObjects = allObjects.concat(objects.data.filter((item: any) => item.data.content.fields.tick === 'WOLFI'))
           hasNextPage = objects.hasNextPage
         }
         const unstaked = allObjects.map((item: any) => {
@@ -579,8 +577,25 @@ export default function Game() {
   useEffect(() => {
     if (isConnected) {
       (async () => {
-        const balanceObjects = await client.getBalance({ owner: account!.address, coinType: `${OriginFoxGamePackageId}::egg::EGG` })
-        setEggBalance(parseInt(balanceObjects.totalBalance));
+        let hasNextPage = true;
+        let balanceObjects: any[] = []
+        while (hasNextPage) {
+          const objects = await client.getOwnedObjects({
+            owner: account!.address,
+            filter: {
+              MatchAll: [
+                { StructType: `${OriginMovescriptionPackageId}::movescription::Movescription` },
+                { AddressOwner: account!.address }
+              ]
+            },
+            options: { showContent: true },
+          })
+          balanceObjects = balanceObjects.concat(objects.data.filter((item: any) => item.data.content.fields.tick === 'WOOLI'))
+          hasNextPage = objects.hasNextPage
+        }
+        let totalAmount = balanceObjects.map((c: any) => parseInt(c.data.content.fields.amount))
+          .reduce((sum, current) => sum + current);
+        setEggBalance(totalAmount);
       })()
     }
   }, [isConnected, claimTx, unstakeTx])
@@ -741,7 +756,7 @@ export default function Game() {
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
               <div className="flex flex-col items-center">
-                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red">{numberWithCommas(Math.ceil(eggBalance / 1000000000))}</span> EGG</div>
+                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red">{numberWithCommas(eggBalance)}</span> EGG</div>
                 <div className="h-4"></div>
                 <div className="text-center font-console pt-1 text-red text-2xl">UNSTAKED</div>
                 <div className="h-4"></div>
