@@ -769,8 +769,8 @@ export default function Game() {
                   <div className="flex">
                     <div className="text-red font-console">CAN STAKE</div>
                     {isUnstakedAllselected ?
-                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeAllUnstaked(); setIsUnstakedAllselected(false) }}>Unselect all</div> :
-                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { addAllUnstaked(); setIsUnstakedAllselected(true) }}>Select all</div>
+                      <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeAllUnstaked(); setIsUnstakedAllselected(false) }}>Unselect all</div> :
+                      <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { addAllUnstaked(); setIsUnstakedAllselected(true) }}>Select all</div>
                     }
                   </div>
                   {unstakedFox.length == 0 && unstakedChicken.length == 0 ? <>
@@ -788,8 +788,8 @@ export default function Game() {
                   <div className="flex">
                     <div className="text-red font-console">BARN</div>
                     {isStakedChickenAllselected ?
-                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedChicken(); setIsStakedChickenAllselected(false) }}>Unselect all</div> :
-                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedChicken(); setIsStakedChickenAllselected(true) }}>Select all</div>
+                      <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedChicken(); setIsStakedChickenAllselected(false) }}>Unselect all</div> :
+                      <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedChicken(); setIsStakedChickenAllselected(true) }}>Select all</div>
                     }
                   </div>
                   {stakedChicken.length == 0 ? <>
@@ -804,8 +804,8 @@ export default function Game() {
                   <div className="flex">
                     <div className="text-red font-console">FOX PACK</div>
                     {isStakedFoxAllselected ?
-                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedFox(); setIsStakedFoxAllselected(false) }}>Unselect all</div> :
-                      <div className="pl-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedFox(); setIsStakedFoxAllselected(true) }}>Select all</div>
+                      <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedFox(); setIsStakedFoxAllselected(false) }}>Unselect all</div> :
+                      <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedFox(); setIsStakedFoxAllselected(true) }}>Select all</div>
                     }
                   </div>
                   {stakedFox.length == 0 ? <>
