@@ -17,6 +17,7 @@
     "@radix-ui/themes": "^2.0.0",
     "@tanstack/react-query": "^5.0.0",
     "react": "^18.2.0",
+    "react-countup": "^6.5.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3"
   },

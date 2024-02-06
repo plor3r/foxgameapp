@@ -16,6 +16,7 @@ import {
   useSuiClient,
 } from '@mysten/dapp-kit';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
+import CountUp from 'react-countup';
 
 
 export default function Game() {
@@ -745,7 +746,7 @@ export default function Game() {
                 </div>
                 <div className="h-4"></div>
                 <div className="flex flex-row space-x-4">
-                  <div className="text-black text-lg">Your $MOVE amount: <span className="text-red">{numberWithCommas(moveAmount)}</span> MOVE</div>
+                  <div className="text-black text-lg">Your $MOVE amount: <span className="text-red"><CountUp end={moveAmount} /></span> MOVE</div>
                 </div>
               </div>
             </div>
@@ -756,7 +757,7 @@ export default function Game() {
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
               <div className="flex flex-col items-center">
-                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red">{numberWithCommas(eggBalance)}</span> EGG</div>
+                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red"><CountUp end={eggBalance} /></span> EGG</div>
                 <div className="h-4"></div>
                 <div className="text-center font-console pt-1 text-red text-2xl">UNSTAKED</div>
                 <div className="h-4"></div>
