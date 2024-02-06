@@ -108,7 +108,7 @@ export default function Game() {
           showContent: true
         }
       })
-      allObjects = allObjects.concat(objects.data)
+      allObjects = allObjects.concat(objects.data.filter((item: any) => item.data.content.fields.tick === 'MOVE'))
       hasNextPage = objects.hasNextPage
     }
     let totalAmount = allObjects.map((c: any) => parseInt(c.data.content.fields.amount))
@@ -117,26 +117,32 @@ export default function Game() {
   }
 
   async function fetch_movescription_greater_than(amount: any): Promise<[any, number]> {
-    const objects = await client.getOwnedObjects({
-      owner: account!.address,
-      filter: {
-        MatchAll: [
-          {
-            StructType: `${OriginMovescriptionPackageId}::movescription::Movescription`,
-          },
-          {
-            AddressOwner: account!.address,
-          }
-        ]
-      },
-      options: {
-        showContent: true
-      }
-    })
+    let hasNextPage = true;
+    let allObjects: any[] = []
+    while (hasNextPage) {
+      const objects = await client.getOwnedObjects({
+        owner: account!.address,
+        filter: {
+          MatchAll: [
+            {
+              StructType: `${OriginMovescriptionPackageId}::movescription::Movescription`,
+            },
+            {
+              AddressOwner: account!.address,
+            }
+          ]
+        },
+        options: {
+          showContent: true
+        }
+      })
+      allObjects = allObjects.concat(objects.data.filter((item: any) => item.data.content.fields.tick === 'MOVE'))
+      hasNextPage = objects.hasNextPage
+    }
     let totalAmount = 0;
     let objectIds = []
-    for (let index = 0; index < objects.data.length; index++) {
-      const element: any = objects.data[index];
+    for (let index = 0; index < allObjects.length; index++) {
+      const element: any = allObjects[index];
       objectIds.push(element.data.objectId)
       totalAmount += parseInt(element.data.content.fields.amount)
       if (totalAmount >= amount) break
