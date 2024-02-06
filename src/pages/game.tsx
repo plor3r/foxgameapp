@@ -761,7 +761,7 @@ export default function Game() {
             <div className="absolute wood-mask"></div>
             <div className="relative w-full h-full z-index:5">
               <div className="flex flex-col items-center">
-                <div className="text-center font-console pt-1 text-xl">$EGG in your wallet: <span className="text-red"><CountUp end={eggBalance} /></span> EGG</div>
+                <div className="text-center font-console pt-1 text-xl">$WOOL in your wallet: <span className="text-red"><CountUp end={eggBalance} /></span> WOOL</div>
                 <div className="h-4"></div>
                 <div className="text-center font-console pt-1 text-red text-2xl">UNSTAKED</div>
                 <div className="h-4"></div>
@@ -802,7 +802,7 @@ export default function Game() {
                 <div className="h-2"></div>
                 <div className="w-full" style={{ borderWidth: "0px 0px 4px 4px", borderTopStyle: "initial", borderRightStyle: "initial", borderBottomStyle: "solid", borderLeftStyle: "solid", borderTopColor: "initial", borderRightColor: "initial", borderBottomColor: "rgb(42, 35, 30)", borderLeftColor: "rgb(42, 35, 30)", borderImage: "initial", padding: "2px", opacity: "1" }}>
                   <div className="flex">
-                    <div className="text-red font-console">FOX PACK</div>
+                    <div className="text-red font-console">WOLF PACK</div>
                     {isStakedFoxAllselected ?
                       <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { removeStakedFox(); setIsStakedFoxAllselected(false) }}>Unselect all</div> :
                       <div className="ml-2 cursor-pointer hover:bg-gray-200" onClick={() => { addStakedFox(); setIsStakedFoxAllselected(true) }}>Select all</div>
@@ -849,7 +849,7 @@ export default function Game() {
                     <div className="text-center font-console pt-1" >
                       {isClaiming ?
                         <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
-                        : <span>Collect $EGG</span>}
+                        : <span>Collect $WOOL</span>}
                     </div>
                   </div>
                   <div className="relative flex items-center justify-center cursor-pointer false hover:bg-gray-200 active:bg-gray-400"
@@ -859,7 +859,7 @@ export default function Game() {
                     <div className="text-center font-console pt-1" >
                       {isUnstaking ?
                         <div className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading"></div>
-                        : <span>Collect $EGG and Unstake</span>}
+                        : <span>Collect $WOOL and Unstake</span>}
                     </div>
                   </div>
                 </div>}
